@@ -10,25 +10,29 @@ using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class SheetsManager : MonoBehaviour
 {
     static readonly string[] scopes = { Google.Apis.Sheets.v4.SheetsService.Scope.Spreadsheets };
 
-    static readonly string applicationName = “ANYTHING”;
+    static readonly string applicationName = "planetary";
 
-    static readonly string spreadsheetId = “SHEET_ID_HERE;
+    static readonly string spreadsheetId = "1vaJzdKDZP85q5CDc6RHnONkJTOlMGAFX3Mdioqn4a98";
 
-    static private string jsonPath = “DIRECTORY_PATH_TO_JSON_CREDENTIALS;
+    static private string jsonPath = "/Creds/cosmosongames-0c17ee530b7b.json";
 
     static public SheetsService service;
 
     public LogicManagerScript logic;
 
+    public bool debug;
+
     public void Start()
     {
-        logic = GameObject.FindGameObjectWithTag("Logic").GetComponent<LogicManagerScript>();
+        if (logic != null) {
+            logic = GameObject.FindGameObjectWithTag("Logic").GetComponent<LogicManagerScript>();
+            debug = logic.debug;
+        }
 
         string fullPath = Application.dataPath + jsonPath;
 
@@ -104,7 +108,7 @@ public class SheetsManager : MonoBehaviour
                 lbString = $"{lbString}{item.Key},{item.Value.ToString()}|";
             }
 
-            if (logic.debug)
+            if (debug)
             {
                 Debug.Log(lbString);
                 Debug.Log(players);
@@ -119,7 +123,7 @@ public class SheetsManager : MonoBehaviour
         }
         PlayerPrefs.Save();
 
-        if (logic.debug)
+        if (debug)
         {
             var data = ReadEntries("rawLB!A:B");
 
@@ -138,9 +142,41 @@ public class SheetsManager : MonoBehaviour
     {
         var toAdd = new List<object>() {username, time};
         CreateEntry(toAdd, "rawLB!A:B");
-        if (logic.debug)
+        if (debug)
         {
             Debug.Log($"INFO: Succesfully added '{username}' with time of '{time.ToString()}' seconds to leaderboard!");
+        }
+    }
+
+    public void AddPuzzleData(int roomNum, int puzzleNum, int timeTaken, int numOpened = -1)
+    {
+        string range = $"r{roomNum.ToString()}p{puzzleNum.ToString()}!A:B";
+        var toAdd = new List<object>() {DateTime.Now.ToString(), timeTaken.ToString(), numOpened.ToString()};
+        CreateEntry(toAdd, range);
+
+        if (debug)
+        {
+            Debug.Log($"INFO: Succesfully added time data for room {roomNum.ToString()} puzzle {puzzleNum.ToString()} with time of '{timeTaken.ToString()}'");
+        }
+    }
+
+    public void AddRoomData(string roomName, float startTime, float endTime) {
+        string range = $"{roomName}!A:B";
+        var toAdd = new List<object>() {DateTime.Now.ToString(), startTime.ToString(), endTime.ToString(), (endTime - startTime).ToString()};
+        CreateEntry(toAdd, range);
+        
+        if (debug) {
+            Debug.Log($"INFO: Succesfully added time data for room {roomName} with start time of '{startTime.ToString()}' and end time of '{endTime.ToString()}'");
+        }
+    }
+
+    public void AddSurveyData(string Q1, string Q2, string Q3) {
+        string range = $"survey!A:C";
+        var toAdd = new List<object>() {DateTime.Now.ToString(), Q1, Q2, Q3};
+        CreateEntry(toAdd, range);
+        
+        if (debug) {
+            Debug.Log($"INFO: Succesfully added survey data with Q1 of '{Q1}' and Q2 of '{Q2}' and Q3 of '{Q3}'");
         }
     }
 }
